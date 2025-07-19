@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OA Simulator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: #222;
+      color: #fff;
+      padding: 10px 20px;
+      font-size: 18px;
+      font-weight: bold;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header select {
+      padding: 5px;
+      font-size: 14px;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+    }
+
+    .problem-statement {
+      width: 35%;
+      padding: 20px;
+      background: #f5f5f5;
+      overflow-y: auto;
+      border-right: 1px solid #ccc;
+      resize: horizontal;
+      min-width: 280px;
+      max-width: 80%;
+    }
+
+    .problem-statement h3 {
+      font-size: 20px;
+    }
+
+    .problem-statement p,
+    .problem-statement ul,
+    .problem-statement ol {
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .resizer {
+      width: 5px;
+      cursor: col-resize;
+      background-color: #ddd;
+    }
+
+    .editor-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    #editor {
+      flex: 1;
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .problem-statement,
+      .resizer {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+  OA Simulator
+    <select id="languageSelect">
+      <option value="cpp">C++</option>
+      <option value="java">Java</option>
+      <option value="python">Python</option>
+    </select>
+  </div>
+
+  <div class="main">
+    <div class="problem-statement" id="problemPane">
+      <h3>Problem: Interstellar Time Dilation and Warp Computation</h3>
+      <p>
+        In a distant future, humanity has achieved interstellar travel. Every spaceship has a warp drive which can warp spacetime and allow for faster-than-light travel. Due to relativistic effects, time dilation must be carefully accounted for between Earth (base station) and traveling ships.
+      </p>
+      <p>You are given a list of <code>n</code> warp-jump commands, each with three values:</p>
+      <ul>
+        <li><code>T</code> — time in seconds the ship plans to jump</li>
+        <li><code>D</code> — distance covered in light-years</li>
+        <li><code>F</code> — fuel units consumed</li>
+      </ul>
+      <p>A jump is considered <b>valid</b> only if <code>D / T ≤ 1</code>. If invalid, discard it. Your task is to compute:</p>
+      <ol>
+        <li>Total valid jumps</li>
+        <li>Average fuel consumption for valid jumps (rounded down)</li>
+        <li>Total time dilation factor <code>∑ sqrt(1 - (v²/c²))</code> where <code>v = D/T</code> and <code>c = 1</code></li>
+      </ol>
+      <p>
+        <b>Input</b>: First line contains <code>n</code>. Next <code>n</code> lines contain T D F.<br>
+        <b>Output</b>: Three values: valid jump count, average fuel, and total time dilation (rounded to 4 decimal places).
+      </p>
+      <p>
+        <b>Sample Input:</b><br>
+        3<br>
+        2 1 100<br>
+        5 6 200<br>
+        4 3 150<br><br>
+        <b>Sample Output:</b><br>
+        2 125 1.8660
+      </p>
+    </div>
+
+    <div class="resizer" id="resizer"></div>
+
+    <div class="editor-section">
+      <div id="editor"></div>
+    </div>
+  </div>
+
+  <!-- Monaco Editor -->
+  <script src="https://unpkg.com/monaco-editor@0.47.0/min/vs/loader.js"></script>
+  <script>
+    let editor;
+
+    const defaultCode = {
+      cpp: `#include <iostream>
+#include <cmath>
+#include <iomanip>
+using namespace std;
+
+int main() {
+    int n;
+    cin >> n;
+    int count = 0, totalFuel = 0;
+    double dilation = 0.0;
+    for (int i = 0; i < n; i++) {
+        double T, D;
+        int F;
+        cin >> T >> D >> F;
+        double v = D / T;
+        if (v <= 1) {
+            count++;
+            totalFuel += F;
+            dilation += sqrt(1 - v * v);
+        }
+    }
+    if (count == 0)
+        cout << "0 0 0.0000\\n";
+    else
+        cout << count << " " << (totalFuel / count) << " " << fixed << setprecision(4) << dilation << endl;
+    return 0;
+}`,
+      java: `import java.util.*;
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = sc.nextInt();
+        int count = 0, totalFuel = 0;
+        double dilation = 0.0;
+        for (int i = 0; i < n; i++) {
+            double T = sc.nextDouble();
+            double D = sc.nextDouble();
+            int F = sc.nextInt();
+            double v = D / T;
+            if (v <= 1) {
+                count++;
+                totalFuel += F;
+                dilation += Math.sqrt(1 - v * v);
+            }
+        }
+        if (count == 0)
+            System.out.println("0 0 0.0000");
+        else
+            System.out.printf("%d %d %.4f\\n", count, totalFuel / count, dilation);
+    }
+}`,
+      python: `import math
+
+n = int(input())
+count = 0
+total_fuel = 0
+dilation = 0.0
+
+for _ in range(n):
+    T, D, F = map(float, input().split())
+    v = D / T
+    if v <= 1:
+        count += 1
+        total_fuel += int(F)
+        dilation += math.sqrt(1 - v * v)
+
+if count == 0:
+    print("0 0 0.0000")
+else:
+    print(count, total_fuel // count, "{:.4f}".format(dilation))`
+    };
+
+    require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.47.0/min/vs' } });
+    require(['vs/editor/editor.main'], function () {
+      editor = monaco.editor.create(document.getElementById('editor'), {
+        value: defaultCode["cpp"],
+        language: 'cpp',
+        theme: 'vs-dark',
+        fontSize: 14,
+        automaticLayout: true
+      });
+
+      const languageSelect = document.getElementById("languageSelect");
+      languageSelect.addEventListener("change", function () {
+        const lang = this.value;
+        monaco.editor.setModelLanguage(editor.getModel(), lang);
+        editor.setValue(defaultCode[lang]);
+      });
+    });
+
+    // Resizer
+    const resizer = document.getElementById("resizer");
+    const left = document.getElementById("problemPane");
+    const main = document.querySelector(".main");
+
+    let x = 0, leftWidth = 0;
+
+    resizer.addEventListener("mousedown", function (e) {
+      x = e.clientX;
+      leftWidth = left.getBoundingClientRect().width;
+      document.addEventListener("mousemove", resize);
+      document.addEventListener("mouseup", stopResize);
+    });
+
+    function resize(e) {
+      const dx = e.clientX - x;
+      const newLeftWidth = ((leftWidth + dx) * 100) / main.getBoundingClientRect().width;
+      left.style.width = `${newLeftWidth}%`;
+    }
+
+    function stopResize() {
+      document.removeEventListener("mousemove", resize);
+      document.removeEventListener("mouseup", stopResize);
+    }
+  </script>
+</body>
+</html>
